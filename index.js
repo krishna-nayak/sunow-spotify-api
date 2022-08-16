@@ -10,6 +10,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const port = process.env.PORT || 8080;
+
+app.use("/production", require("./routes/login"));
+
 app.post("/api/refresh", (req, res) => {
   const refreshToken = req.body.refreshToken;
 
@@ -56,4 +60,21 @@ app.post("/api/login", (req, res) => {
     });
 });
 
-app.listen(8080, () => console.log("Server listening on port 8080"));
+app.post("/api/search", (req, res) => {
+  const { q } = req.body;
+  const spotifyApi = new SpotifyWebApi({
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+  });
+  spotifyApi.setAccessToken(req.headers.authorization.split(" ")[1]);
+  spotifyApi.searchTracks(q).then(
+    function (data) {
+      res.status(200).json(data.body);
+    },
+    function (err) {
+      res.json(err.body);
+    }
+  );
+});
+
+app.listen(port, () => console.log("Server listening on port 8080"));
